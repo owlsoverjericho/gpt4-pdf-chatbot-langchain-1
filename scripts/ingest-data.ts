@@ -3,6 +3,7 @@ import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
 import { PineconeStore } from 'langchain/vectorstores/pinecone';
 import { pinecone } from '@/utils/pinecone-client';
 import { PDFLoader } from 'langchain/document_loaders/fs/pdf';
+import { TextLoader } from "langchain/document_loaders/fs/text";
 import { PINECONE_INDEX_NAME, PINECONE_NAME_SPACE } from '@/config/pinecone';
 import { DirectoryLoader } from 'langchain/document_loaders/fs/directory';
 
@@ -13,14 +14,17 @@ const filePath = 'docs';
 
 export const run = async () => {
   try {
+    console.log('Bulcode Ingestion has started')
     /*load raw docs from the all files in the directory */
     const directoryLoader = new DirectoryLoader(filePath, {
-      '.pdf': (path) => new PDFLoader(path),
+      //'.pdf': (path) => new PDFLoader(path),
+      ".txt": (path) => new TextLoader(path),
     });
-
+    console.log('loading the documents')
     // const loader = new PDFLoader(filePath);
     const rawDocs = await directoryLoader.load();
 
+    console.log('splitting...')
     /* Split text into chunks */
     const textSplitter = new RecursiveCharacterTextSplitter({
       chunkSize: 1000,
@@ -38,7 +42,7 @@ export const run = async () => {
     //embed the PDF documents
     await PineconeStore.fromDocuments(docs, embeddings, {
       pineconeIndex: index,
-      namespace: PINECONE_NAME_SPACE,
+      //namespace: PINECONE_NAME_SPACE,
       textKey: 'text',
     });
   } catch (error) {
